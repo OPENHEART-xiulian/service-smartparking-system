@@ -9,9 +9,9 @@ mybatis plus    作为数据层
 mapstruct       作为数据转换
 
 
-前端仓库地址：git@gitee.com:openheart_1/web-smartparking-system.git
+前端仓库地址：git@github.com:OPENHEART-xiulian/web-smartparking-system.git
 
-后端仓库地址：git@gitee.com:openheart_1/openheart-stopcar-pc.git
+后端仓库地址：git@github.com:OPENHEART-xiulian/service-smartparking-system.git
 
 可自行下载本地部署
 
