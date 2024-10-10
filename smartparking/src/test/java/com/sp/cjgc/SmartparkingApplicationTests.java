@@ -9,9 +9,5 @@ class SmartparkingApplicationTests {
 
     @Test
     void contextLoads() {
-        
-        String cameraIp = "192.88.233.19";
-        short wLinkPort = 8000;
-        String sLicense = "粤A11111";
     }
 }
