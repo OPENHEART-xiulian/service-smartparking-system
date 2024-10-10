@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sp.cjgc.backend.mapper.SystemChargeRulesMapper">
+    <resultMap type="com.sp.cjgc.backend.domain.SystemChargeRules" id="systemChargeRulesResultMap">
+        <id property="id" column="id" jdbcType="VARCHAR"/>
+        <result property="freeDuration" column="free_duration" jdbcType="INTEGER"/>
+        <result property="tollStandard" column="toll_standard" jdbcType="VARCHAR"/>
+        <result property="monthlyInternalCar" column="monthly_internal_car" jdbcType="VARCHAR"/>
+        <result property="feeCap" column="fee_cap" jdbcType="VARCHAR"/>
+        <result property="monthlyEnterpriseCar" column="monthly_enterprise_car" jdbcType="VARCHAR"/>
+        <result property="monthlyExternalCarMachinery" column="monthly_external_car_machinery" jdbcType="VARCHAR"/>
+        <result property="monthlyInternalCarNoMachinery" column="monthly_internal_car_no_machinery" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <!--列名-->
+    <sql id="columns">
+        id,
+        free_duration,
+        toll_standard,
+        fee_cap,
+        monthly_internal_car,
+        monthly_enterprise_car,
+        monthly_external_car_machinery,
+        monthly_internal_car_no_machinery
+    </sql>
+
+    <!--查询 系统管理-收费规则表 对象-->
+    <select id="getEntity" resultMap="systemChargeRulesResultMap">
+        SELECT
+            <include refid="columns"/>
+        FROM system_charge_rules
+        LIMIT 1
+    </select>
+
+
+</mapper>

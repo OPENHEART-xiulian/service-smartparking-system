@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sp.cjgc.backend.mapper.ParkCollectCouponsMapper">
+    <resultMap type="com.sp.cjgc.backend.domain.ParkCollectCoupons" id="parkCollectCouponsResultMap">
+        <id property="id" column="id" jdbcType="VARCHAR"/>
+        <result property="userId" column="user_id" jdbcType="VARCHAR"/>
+        <result property="mainlandLicensePlates" column="mainland_license_plates" jdbcType="VARCHAR"/>
+        <result property="startTime" column="start_time" jdbcType="TIMESTAMP"/>
+        <result property="endTime" column="end_time" jdbcType="TIMESTAMP"/>
+        <result property="totalDuration" column="total_duration" jdbcType="VARCHAR"/>
+        <result property="totalAmount" column="total_amount" jdbcType="VARCHAR"/>
+        <result property="totalDiscountAmount" column="total_discount_amount" jdbcType="VARCHAR"/>
+        <result property="discount" column="discount" jdbcType="VARCHAR"/>
+        <result property="totalIncomeAmount" column="total_income_amount" jdbcType="VARCHAR"/>
+        <result property="receiveTime" column="receive_time" jdbcType="TIMESTAMP"/>
+        <result property="isItOver" column="is_it_over" jdbcType="INTEGER"/>
+        <result property="isPlay" column="is_play" jdbcType="INTEGER"/>
+        <result property="playTime" column="play_time" jdbcType="TIMESTAMP"/>
+    </resultMap>
+    
+    <!--列名-->
+    <sql id="columns">
+        pcc.id,
+        pcc.user_id,
+        pcc.mainland_license_plates,
+        pcc.start_time,
+        pcc.end_time,
+        pcc.total_duration,
+        pcc.total_amount,
+        pcc.total_discount_amount,
+        pcc.discount,
+        pcc.total_income_amount,
+        pcc.receive_time,
+        pcc.is_it_over,
+        pcc.is_play,
+        pcc.play_time
+    </sql>
+
+    <!--根据商户ID统计该商户有多少未使用的优惠券-->
+    <select id="countTotal" resultType="java.lang.Long">
+        SELECT
+            COUNT(id)
+        FROM
+            park_collect_coupons
+        WHERE  is_it_over = 0
+        <if test="userId != null and userId != ''">
+            AND user_id = #{userId}
+        </if>
+    </select>
+
+    <!--根据车牌号查询优惠券-->
+    <select id="selectByPrimaryKey" resultMap="parkCollectCouponsResultMap">
+        SELECT
+            <include refid="columns"/>
+            ,su.free_time AS freeTime
+        FROM
+            park_collect_coupons pcc
+        INNER JOIN system_users su ON pcc.user_id = su.id
+        WHERE
+            pcc.mainland_license_plates = #{plates}
+        AND is_it_over = 0
+    </select>
+
+</mapper>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sp.cjgc.backend.mapper.SystemWeChatJsapiPayMapper">
+    <resultMap type="com.sp.cjgc.backend.domain.SystemWeChatJsapiPay" id="systemWeChatJsapiPayResultMap">
+        <id property="id" column="id" jdbcType="VARCHAR"/>
+        <result property="macId" column="mac_id" jdbcType="VARCHAR"/>
+        <result property="appId" column="app_id" jdbcType="VARCHAR"/>
+        <result property="secret" column="secret" jdbcType="VARCHAR"/>
+        <result property="currency" column="currency" jdbcType="VARCHAR"/>
+        <result property="privateKeyPath" column="private_key_path" jdbcType="VARCHAR"/>
+        <result property="apiV3Key" column="api_v3_key" jdbcType="VARCHAR"/>
+        <result property="macSerialNo" column="mac_serial_no" jdbcType="VARCHAR"/>
+    </resultMap>
+    
+    <!--列名-->
+    <sql id="columns">
+        id,
+        mac_id,
+        app_id,
+        secret,
+        currency,
+        private_key_path,
+        api_v3_key,
+        mac_serial_no
+    </sql>
+
+</mapper>

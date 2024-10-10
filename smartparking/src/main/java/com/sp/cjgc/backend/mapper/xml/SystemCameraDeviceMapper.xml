@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sp.cjgc.backend.mapper.SystemCameraDeviceMapper">
+    <resultMap type="com.sp.cjgc.backend.domain.SystemCameraDevice" id="systemCameraDeviceResultMap">
+        <id property="id" column="id" jdbcType="VARCHAR"/>
+        <result property="deviceIp" column="device_ip" jdbcType="VARCHAR"/>
+        <result property="devicePort" column="device_port" jdbcType="VARCHAR"/>
+        <result property="deviceUserName" column="device_user_name" jdbcType="VARCHAR"/>
+        <result property="devicePassword" column="device_password" jdbcType="VARCHAR"/>
+        <result property="deviceName" column="device_name" jdbcType="VARCHAR"/>
+        <result property="deviceLocation" column="device_location" jdbcType="VARCHAR"/>
+        <result property="deviceRole" column="device_role" jdbcType="INTEGER"/>
+        <result property="isToll" column="is_toll" jdbcType="INTEGER"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+        <result property="groupId" column="group_id" jdbcType="INTEGER"/>
+        <result property="userId" column="user_id" jdbcType="INTEGER"/>
+    </resultMap>
+    
+    <!--列名-->
+    <sql id="columns">
+        id,
+        device_ip,
+        device_port,
+        device_user_name,
+        device_password,
+        device_name,
+        device_location,
+        device_role,
+        is_toll,
+        create_time,
+        update_time,
+        group_id,
+        user_id
+    </sql>
+
+    <!--查询 系统管理-摄像头设备管理表 列表-->
+    <select id="getList" resultMap="systemCameraDeviceResultMap">
+        SELECT
+        <include refid="columns"/>
+        FROM system_camera_device
+        <include refid="selectQuery"/>
+    </select>
+
+    <!--查询 系统管理-摄像头设备管理表-->
+    <select id="getEntity" resultMap="systemCameraDeviceResultMap">
+        SELECT
+        <include refid="columns"/>
+        FROM system_camera_device
+        WHERE device_ip = #{deviceIp}
+        <if test="devicePort != null and devicePort != ''">
+            AND device_port = #{devicePort}
+        </if>
+        LIMIT 1
+    </select>
+
+    <!--系统管理-摄像头设备管理表 的查询条件-->
+    <sql id="selectQuery">
+        WHERE 1 = 1
+        <if test="query.deviceIp != null and query.deviceIp != ''">
+            AND device_ip = #{query.deviceIp}
+        </if>
+        <if test="query.devicePort != null and query.devicePort != ''">
+            AND device_port = #{query.devicePort}
+        </if>
+        <if test="query.deviceName != null and query.deviceName != ''">
+            AND device_name LIKE CONCAT('%', #{query.deviceName}, '%')
+        </if>
+        <if test="query.deviceLocation != null and query.deviceLocation != ''">
+            AND device_location LIKE CONCAT('%', #{query.deviceLocation}, '%')
+        </if>
+        <if test="query.deviceRole != null">
+            AND device_role = #{query.deviceRole}
+        </if>
+        <if test="query.isToll != null">
+            AND is_toll = #{query.isToll}
+        </if>
+        <if test="query.groupId != null">
+            AND group_id = #{query.groupId}
+        </if>
+        <if test="query.startTime != null and query.startTime != ''">
+            AND create_time >= #{query.startTime}
+        </if>
+        <if test="query.endTime != null and query.endTime != ''">
+            AND create_time &lt;= #{query.endTime}
+        </if>
+    </sql>
+</mapper>

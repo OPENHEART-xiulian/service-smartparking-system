@@ -1,0 +1,22 @@
+LINUX环境部署启动步骤：
+1. 先项目使用maven自带的package命令打包成jar包。
+2. 将jar包和 dt.sh 脚本放在服务器的同级目录中。
+3. 执行命令 ./dt.sh start 启动项目。
+
+注意事项:
+   1. 如果在输入 ./dt.sh start 命令的时候，提示没有权限，
+      那么就先使用root账号权限，在 dt.sh 脚本所在的目录中，
+      输入：chmod u+x dt.sh 命令，给dt.sh脚本赋予可以执行的权限。
+
+   2. dt.sh脚本所在的目录中，只能允许存在一个 以 .jar 为结尾的 包存在，
+      如果存在多个 jar 文件，就会存在识别不出 具体要启动哪个jar包。
+
+dt.sh 脚本命令说明：
+      ./dt.sh start     ---  启动
+      ./dt.sh stop      ---  停止
+      ./dt.sh restart   ---  重启
+建议使用： ./dt.sh restart 命令
+
+查看运行日志命令：
+    在jar包所在的目录中，输入：tail -f nohup.out
+

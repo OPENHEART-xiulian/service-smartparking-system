@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sp.cjgc.backend.mapper.CarVpiMonthlyRentMapper">
+    <resultMap type="com.sp.cjgc.backend.domain.CarVpiMonthlyRent" id="carVpiMonthlyRentResultMap">
+        <id property="id" column="id" jdbcType="VARCHAR"/>
+        <result property="mainlandLicensePlates" column="mainland_license_plates" jdbcType="VARCHAR"/>
+        <result property="otherLicensePlates" column="other_license_plates" jdbcType="VARCHAR"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+    </resultMap>
+    
+    <!--列名-->
+    <sql id="columns">
+        id
+        ,
+        mainland_license_plates,
+        other_license_plates,
+        create_time,
+        update_time
+    </sql>
+
+    <!--统计 车辆管理-vip月租车登记管理表 总数-->
+    <select id="countTotal" resultType="java.lang.Long">
+        SELECT 
+            COUNT(id)
+        FROM car_vpi_monthly_rent
+        <include refid="selectQuery"/>
+    </select>
+    
+    <!--分页查询 车辆管理-vip月租车登记管理表 列表-->
+    <select id="getPageList" resultMap="carVpiMonthlyRentResultMap">
+        SELECT 
+            <include refid="columns"/>
+        FROM car_vpi_monthly_rent
+        <include refid="selectQuery"/>
+        <if test="query.sort == 1">
+            ORDER BY create_time ${query.sortType == 1 ? 'ASC' : 'DESC'}
+        </if>
+        <if test="query.sort == 2">
+            ORDER BY update_time ${query.sortType == 1 ? 'ASC' : 'DESC'}
+        </if>
+        <if test="query.sort == null or query.sortType == null">
+            ORDER BY create_time DESC
+        </if>
+        LIMIT #{query.pageNumber},#{query.pageSize}
+    </select>
+
+    <!--根据内地车牌号码查询数据是否存在-->
+    <select id="getByLicensePlates" resultMap="carVpiMonthlyRentResultMap">
+        SELECT
+        <include refid="columns"/>
+        FROM car_vpi_monthly_rent
+        WHERE mainland_license_plates LIKE CONCAT('%',#{mainlandLicensePlates},'%')
+    </select>
+
+    <!--车辆管理-vip月租车登记管理表 的查询条件-->
+    <sql id="selectQuery">
+        WHERE 1 = 1
+        <if test="query.otherLicensePlates != null and query.otherLicensePlates != ''">
+            AND other_license_plates LIKE CONCAT('%',#{query.otherLicensePlates},'%')
+        </if>
+        <if test="query.mainlandLicensePlates != null and query.mainlandLicensePlates != ''">
+            AND mainland_license_plates LIKE CONCAT('%',#{query.mainlandLicensePlates},'%')
+        </if>
+        <if test="query.startTime != null and query.startTime != ''">
+            AND create_time >= #{query.startTime}
+        </if>
+        <if test="query.endTime != null and query.endTime != ''">
+            AND create_time &lt;= #{query.endTime}
+        </if>
+    </sql>
+</mapper>

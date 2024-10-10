@@ -1,0 +1,44 @@
+#服务端口
+server:
+  port: 37902
+
+# 数据源配置信息
+table:
+  # 数据源IP + 端口
+  ip: ""
+  # 数据源账号
+  username: ""
+  # 数据源密码
+  password: ""
+  # 数据源名称
+  schema: smart_parking
+
+spring:
+  #多数据源配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${table.ip}/${table.schema}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowMultiQueries=true
+    username: ${table.username}
+    password: ${table.password}
+
+# swagger配置
+swagger:
+  #是否开启swagger文档，true|开启  false｜关闭
+  enable: true
+  # 标题
+  title: "智慧停车接口文档"
+  # 说明
+  description: "智慧停车接口文档描述"
+  # 版本号
+  version: "1.0.1"
+
+# 文件上传配置
+file:
+  # 是否开启第三方作为文件上传存储，true|开启  false｜关闭
+  thirdParty: true
+  # log上传地址
+  root: /opensource/smartParking/backend/log/
+  # 停车领劵二维码生成地址
+  qrCode: /opensource/smartParking/backend/qrcode/
+  # 商户私钥文件上传地址
+  privateKeyPath: /opensource/smartParking/backend/wxpay/

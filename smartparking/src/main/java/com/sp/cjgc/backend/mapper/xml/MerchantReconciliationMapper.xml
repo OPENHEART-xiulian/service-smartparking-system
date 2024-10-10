@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sp.cjgc.backend.mapper.MerchantReconciliationMapper">
+    <resultMap type="com.sp.cjgc.backend.domain.MerchantReconciliation" id="merchantReconciliationResultMap">
+        <id property="id" column="id" jdbcType="VARCHAR"/>
+        <result property="userId" column="user_id" jdbcType="VARCHAR"/>
+        <result property="totalDuration" column="total_duration" jdbcType="VARCHAR"/>
+        <result property="totalAmount" column="total_amount" jdbcType="VARCHAR"/>
+        <result property="totalDiscountAmount" column="total_discount_amount" jdbcType="VARCHAR"/>
+        <result property="totalIncomeAmount" column="total_income_amount" jdbcType="VARCHAR"/>
+        <result property="yearNumber" column="year_number" jdbcType="VARCHAR"/>
+        <result property="monthNumber" column="month_number" jdbcType="VARCHAR"/>
+        <result property="status" column="status" jdbcType="VARCHAR"/>
+    </resultMap>
+    
+    <!--列名-->
+    <sql id="columns">
+        mr.id,
+        mr.user_id,
+        mr.total_duration,
+        mr.total_amount,
+        mr.total_discount_amount,
+        mr.total_income_amount,
+        mr.year_number,
+        mr.month_number,
+        mr.status
+    </sql>
+
+    <!--统计 商户-对账记录 总数-->
+    <select id="countTotal" resultType="java.lang.Long">
+        SELECT 
+            COUNT(mr.id)
+        FROM merchant_reconciliation mr
+        <include refid="selectQuery"/>
+    </select>
+    
+    <!--分页查询 商户-对账记录 列表-->
+    <select id="getPageList" resultMap="merchantReconciliationResultMap">
+        SELECT 
+            <include refid="columns"/>
+            ,spd.assigned_number AS assignedNumber
+            ,su.user_name AS userName
+        FROM merchant_reconciliation mr
+        <include refid="selectQuery"/>
+        LIMIT #{query.pageNumber},#{query.pageSize}
+    </select>
+
+    <!--查询未对账的商家记录-->
+    <select id="getEntityByUserId" resultMap="merchantReconciliationResultMap">
+        SELECT * FROM merchant_reconciliation
+        WHERE
+            status = #{status}
+        AND user_id = #{userId}
+        AND year_number = #{yearNumber}
+    </select>
+
+    <!--商户-对账记录 的查询条件-->
+    <sql id="selectQuery">
+        INNER JOIN system_parking_detail spd ON mr.user_id = spd.user_id
+        INNER JOIN system_users su ON mr.user_id = su.id
+        WHERE 1 = 1
+        <if test="query.yearNumber != null and query.yearNumber != ''">
+            AND mr.year_number = #{query.yearNumber}
+        </if>
+        <if test="query.monthNumber != null and query.monthNumber != ''">
+            AND mr.month_number = #{query.monthNumber}
+        </if>
+        <if test="query.userName != null and query.userName != ''">
+            AND su.user_name LIKE CONCAT('%',#{query.userName},'%')
+        </if>
+        <if test="query.status != null and query.status != ''">
+            AND mr.status = #{query.status}
+        </if>
+    </sql>
+</mapper>

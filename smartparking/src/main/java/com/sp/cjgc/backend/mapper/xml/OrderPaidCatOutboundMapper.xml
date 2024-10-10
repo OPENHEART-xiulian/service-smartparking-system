@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sp.cjgc.backend.mapper.OrderPaidCatOutboundMapper">
+    <resultMap type="com.sp.cjgc.backend.domain.OrderPaidCatOutbound" id="orderPaidCatOutboundResultMap">
+        <id property="id" column="id" jdbcType="VARCHAR"/>
+        <result property="userId" column="user_id" jdbcType="VARCHAR"/>
+        <result property="mainlandLicensePlates" column="mainland_license_plates" jdbcType="VARCHAR"/>
+        <result property="startTime" column="start_time" jdbcType="TIMESTAMP"/>
+        <result property="endTime" column="end_time" jdbcType="TIMESTAMP"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="totalDuration" column="total_duration" jdbcType="VARCHAR"/>
+        <result property="playTime" column="play_time" jdbcType="TIMESTAMP"/>
+        <result property="orderNumber" column="order_number" jdbcType="VARCHAR"/>
+        <result property="totalAmount" column="total_amount" jdbcType="VARCHAR"/>
+        <result property="totalDiscountAmount" column="total_discount_amount" jdbcType="VARCHAR"/>
+        <result property="discount" column="discount" jdbcType="VARCHAR"/>
+        <result property="deviceIp" column="device_ip" jdbcType="VARCHAR"/>
+        <result property="totalIncomeAmount" column="total_income_amount" jdbcType="VARCHAR"/>
+        <result property="typeCode" column="type_code" jdbcType="VARCHAR"/>
+        <result property="typeName" column="type_name" jdbcType="VARCHAR"/>
+        <result property="playStatus" column="play_status" jdbcType="VARCHAR"/>
+        <result property="advancePayment" column="advance_payment" jdbcType="INTEGER"/>
+    </resultMap>
+    
+    <!--列名-->
+    <sql id="columns">
+        opo.id,
+        opo.user_id,
+        opo.device_ip,
+        opo.mainland_license_plates,
+        opo.start_time,
+        opo.end_time,
+        opo.create_time,
+        opo.play_status,
+        opo.total_duration,
+        opo.play_time,
+        opo.order_number,
+        opo.total_amount,
+        opo.total_discount_amount,
+        opo.discount,
+        opo.advance_payment,
+        opo.total_income_amount,
+        opo.type_code,
+        opo.type_name
+    </sql>
+
+    <!--统计 订单-车辆出库已支付订单记录 总数-->
+    <select id="countTotal" resultType="java.lang.Long">
+        SELECT 
+            COUNT(opo.id)
+        FROM order_paid_cat_outbound opo
+        <include refid="selectQuery"/>
+    </select>
+    
+    <!--分页查询 订单-车辆出库已支付订单记录 列表-->
+    <select id="getPageList" resultMap="orderPaidCatOutboundResultMap">
+        SELECT 
+            <include refid="columns"/>
+            ,su.user_name AS userName
+        FROM order_paid_cat_outbound opo
+        <include refid="selectQuery"/>
+        ORDER BY opo.play_time DESC
+        LIMIT #{query.pageNumber},#{query.pageSize}
+    </select>
+    
+    <!--订单-车辆出库已支付订单记录 的查询条件-->
+    <sql id="selectQuery">
+        INNER JOIN system_users su ON su.id = opo.user_id
+        WHERE 1 = 1
+        <if test="query.userName != null and query.userName != ''">
+            AND su.user_name LIKE CONCAT('%',#{query.userName},'%')
+        </if>
+        <if test="query.startTime != null and query.startTime != ''">
+            AND opo.start_time >= #{query.startTime}
+        </if>
+        <if test="query.endTime != null and query.endTime != ''">
+            AND opo.end_time &lt;= #{query.endTime}
+        </if>
+        <if test="query.mainlandLicensePlates != null and query.mainlandLicensePlates != ''">
+            AND opo.mainland_license_plates LIKE CONCAT('%',#{query.mainlandLicensePlates},'%')
+        </if>
+        <if test="query.totalDuration != null and query.totalDuration != ''">
+            AND opo.total_duration >= #{query.totalDuration}
+        </if>
+        <if test="query.orderNumber != null and query.orderNumber != ''">
+            AND opo.order_number LIKE CONCAT('%',#{query.orderNumber},'%')
+        </if>
+        <if test="query.totalAmount != null and query.totalAmount != ''">
+            AND opo.total_amount >= #{query.totalAmount}
+        </if>
+        <if test="query.totalDiscountAmount != null and query.totalDiscountAmount != ''">
+            AND opo.total_discount_amount >= #{query.totalDiscountAmount}
+        </if>
+        <if test="query.totalIncomeAmount != null and query.totalIncomeAmount != ''">
+            AND opo.total_income_amount >= #{query.totalIncomeAmount}
+        </if>
+        <if test="query.typeCode != null and query.typeCode != ''">
+            AND opo.type_code = #{query.typeCode}
+        </if>
+        <if test="query.userId != null and query.userId != ''">
+            AND opo.user_id = #{query.userId}
+        </if>
+        <if test="query.typeName != null and query.typeName != ''">
+            AND opo.type_name LIKE CONCAT('%',#{query.typeName},'%')
+        </if>
+    </sql>
+
+    <!-- 定义一个 SQL 片段来生成所有的月份 -->
+    <sql id="allMonths">
+        WITH all_months AS (
+            SELECT DATE_FORMAT(
+                           DATE_ADD(
+                                   CONCAT(#{year}, '-01-01'), INTERVAL n MONTH
+                               ), '%Y-%m') AS month
+        FROM (
+            SELECT 0 AS n
+            UNION ALL SELECT 1
+            UNION ALL SELECT 2
+            UNION ALL SELECT 3
+            UNION ALL SELECT 4
+            UNION ALL SELECT 5
+            UNION ALL SELECT 6
+            UNION ALL SELECT 7
+            UNION ALL SELECT 8
+            UNION ALL SELECT 9
+            UNION ALL SELECT 10
+            UNION ALL SELECT 11
+            ) n
+            )
+    </sql>
+
+    <!-- 定义一个 SQL 片段来获取每月的统计数据 -->
+    <sql id="monthlyStats">
+        monthly_stats AS (
+            SELECT
+                DATE_FORMAT(create_time, '%Y-%m') AS month,
+            SUM(CAST(total_discount_amount AS DECIMAL(10, 2))) AS total_discount_amount,
+            SUM(CAST(total_income_amount AS DECIMAL(10, 2))) AS total_income_amount,
+            SUM(CAST(total_amount AS DECIMAL(10, 2))) AS total_amount
+        FROM
+            order_paid_cat_outbound
+        WHERE
+            YEAR(create_time) = #{year}
+        <if test="userId != null and userId != ''">
+            AND user_id = #{userId}
+        </if>
+        GROUP BY
+            DATE_FORMAT(create_time, '%Y-%m')
+            )
+    </sql>
+
+    <!-- 统计订单 -->
+    <select id="getMonthlyStatistics" parameterType="map" resultType="com.sp.cjgc.backend.domain.MonthlyStatistics">
+        <include refid="allMonths"/>,
+        <include refid="monthlyStats"/>
+        SELECT
+        am.month,
+        COALESCE(ms.total_discount_amount, 0) AS total_discount_amount,
+        COALESCE(ms.total_income_amount, 0) AS total_income_amount,
+        COALESCE(ms.total_amount, 0) AS total_amount
+        FROM
+        all_months am
+        LEFT JOIN
+        monthly_stats ms ON am.month = ms.month
+        ORDER BY
+        am.month
+    </select>
+
+    <!--统计今日临保缴费记录-->
+    <select id="getTodayPayments" resultType="java.lang.Double">
+        SELECT
+            SUM(CAST(total_income_amount AS DECIMAL(10, 2)))
+        FROM order_paid_cat_outbound
+        WHERE
+            DATE(play_time) = CURDATE()
+        AND play_status = #{playStatus}
+        <if test="userId != null and userId != ''">
+            AND user_id = #{userId}
+        </if>
+    </select>
+
+    <!--统计总临保缴费记录-->
+    <select id="getTotalPayments" resultType="java.lang.Double">
+        SELECT
+            SUM(CAST(total_income_amount AS DECIMAL(10, 2)))
+        FROM order_paid_cat_outbound
+        WHERE play_status = #{playStatus}
+        <if test="userId != null and userId != ''">
+           AND  user_id = #{userId}
+        </if>
+    </select>
+
+    <!--查询出库订单-->
+    <select id="getEntity" resultMap="orderPaidCatOutboundResultMap">
+        SELECT
+        <include refid="columns"/>
+        ,su.user_name AS userName
+        FROM order_paid_cat_outbound opo
+        INNER JOIN system_users su ON su.id = opo.user_id OR opo.user_id = su.account
+        WHERE
+         opo.play_status = #{playStatus}
+        <if test="plates != null and plates != ''">
+            AND  opo.mainland_license_plates = #{plates}
+        </if>
+        <if test="deviceIp != null and deviceIp != ''">
+            AND opo.device_ip = #{deviceIp}
+        </if>
+        AND DATE(opo.create_time) = CURDATE()
+        ORDER BY opo.create_time DESC
+        LIMIT 1
+    </select>
+
+    <!--根据车牌号查询当天支付时间为最新的提前支付订单-->
+    <select id="getEntityByPlates" resultMap="orderPaidCatOutboundResultMap">
+        SELECT
+           <include refid="columns"/>
+        FROM order_paid_cat_outbound opo
+        WHERE
+            opo.advance_payment = 1
+        AND opo.play_status = #{playStatus}
+        AND opo.mainland_license_plates = #{plates}
+        AND DATE(opo.play_time) = CURDATE()
+        ORDER BY opo.play_time DESC
+        LIMIT 1
+    </select>
+</mapper>

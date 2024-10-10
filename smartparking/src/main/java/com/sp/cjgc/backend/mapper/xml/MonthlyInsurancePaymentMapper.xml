@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sp.cjgc.backend.mapper.MonthlyInsurancePaymentMapper">
+    <resultMap type="com.sp.cjgc.backend.domain.MonthlyInsurancePayment" id="monthlyInsurancePaymentResultMap">
+        <id property="id" column="id" jdbcType="VARCHAR"/>
+        <result property="mainlandLicensePlates" column="mainland_license_plates" jdbcType="VARCHAR"/>
+        <result property="monthlyStartTime" column="monthly_start_time" jdbcType="TIMESTAMP"/>
+        <result property="monthlyEndTime" column="monthly_end_time" jdbcType="TIMESTAMP"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="carTypeCode" column="car_type_code" jdbcType="VARCHAR"/>
+        <result property="carTypeName" column="car_type_name" jdbcType="VARCHAR"/>
+        <result property="userName" column="user_name" jdbcType="VARCHAR"/>
+        <result property="phoneNumber" column="phone_number" jdbcType="VARCHAR"/>
+        <result property="cardId" column="card_id" jdbcType="VARCHAR"/>
+        <result property="parkingLotCode" column="parking_lot_code" jdbcType="VARCHAR"/>
+        <result property="monthlyFree" column="monthly_free" jdbcType="VARCHAR"/>
+        <result property="paymentStatus" column="payment_status" jdbcType="VARCHAR"/>
+        <result property="paymentAmount" column="payment_amount" jdbcType="VARCHAR"/>
+        <result property="accumulatePaymentAmount" column="accumulate_payment_amount" jdbcType="VARCHAR"/>
+        <result property="longTerm" column="long_term" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <!--列名-->
+    <sql id="columns">
+        id,
+        mainland_license_plates,
+        monthly_start_time,
+        monthly_end_time,
+        car_type_code,
+        car_type_name,
+        user_name,
+        phone_number,
+        card_id,
+        parking_lot_code,
+        monthly_free,
+        payment_status,
+        payment_amount,
+        accumulate_payment_amount,
+        long_term
+    </sql>
+
+    <!--统计 月保-缴费记录 总数-->
+    <select id="countTotal" resultType="java.lang.Long">
+        SELECT
+            COUNT(id)
+        FROM monthly_insurance_payment
+        <include refid="selectQuery"/>
+    </select>
+
+    <!--分页查询 月保-缴费记录 列表-->
+    <select id="getPageList" resultMap="monthlyInsurancePaymentResultMap">
+        SELECT
+            <include refid="columns"/>
+        ,CASE
+             WHEN monthly_end_time > NOW() THEN 1
+             ELSE 2
+             END AS monthlyStatus,
+
+         CASE
+             WHEN monthly_end_time > NOW() THEN
+                 CASE
+                     WHEN DATEDIFF(monthly_end_time, NOW()) > 0 THEN
+                          CONCAT(
+                                DATEDIFF(monthly_end_time, NOW()), '天',
+                                IF(
+                                   HOUR(TIMEDIFF(monthly_end_time, NOW())) > 0,
+                                   CONCAT(
+                                         MOD(HOUR(TIMEDIFF(monthly_end_time, NOW())), 24), '小时',
+                                         IF(MINUTE(TIMEDIFF(monthly_end_time, NOW())) > 0,
+                                         CONCAT(MINUTE(TIMEDIFF(monthly_end_time, NOW())), '分'), '')
+                                   ),
+                                '')
+                          )
+                 ELSE
+                         CONCAT(
+                               IF(
+                                  HOUR(TIMEDIFF(monthly_end_time, NOW())) > 0,
+                                  CONCAT(HOUR(TIMEDIFF(monthly_end_time, NOW())), '小时'),''
+                               ),
+                        IF(
+                           MINUTE(TIMEDIFF(monthly_end_time, NOW())) > 0,
+                           CONCAT(MINUTE(TIMEDIFF(monthly_end_time, NOW())), '分'), '')
+                        )
+             END
+                ELSE '已过期'
+          END AS expirationDate
+        FROM monthly_insurance_payment
+        <include refid="selectQuery"/>
+        LIMIT #{query.pageNumber},#{query.pageSize}
+    </select>
+
+    <!--查询车辆的月保状态-->
+    <select id="getCarStatus" resultMap="monthlyInsurancePaymentResultMap">
+        SELECT
+            <include refid="columns"/>
+            ,CASE
+            WHEN monthly_end_time > NOW() THEN 1
+            ELSE 2
+            END AS monthlyStatus
+        FROM monthly_insurance_payment
+        WHERE
+             mainland_license_plates = #{plates}
+        <if test="paymentStatus != null">
+            AND payment_status = #{paymentStatus}
+        </if>
+    </select>
+
+    <!--月保-缴费记录 的查询条件-->
+    <sql id="selectQuery">
+        WHERE 1 = 1
+        <if test="query.mainlandLicensePlates != null and query.mainlandLicensePlates != ''">
+            AND mainland_license_plates LIKE CONCAT('%',#{query.mainlandLicensePlates},'%')
+        </if>
+        <if test="query.monthlyStartTime != null and query.monthlyStartTime != ''">
+            AND monthly_start_time >= #{query.monthlyStartTime}
+        </if>
+        <if test="query.monthlyEndTime != null and query.monthlyEndTime != ''">
+            AND monthly_end_time &lt;= #{query.monthlyEndTime}
+        </if>
+        <if test="query.carTypeName != null and query.carTypeName != ''">
+            AND car_type_name LIKE CONCAT('%',#{query.carTypeName},'%')
+        </if>
+        <if test="query.longTerm != null ">
+            AND long_term = #{query.longTerm}
+        </if>
+        <if test="query.carTypeCode != null and query.carTypeCode != ''">
+            AND car_type_code = #{query.carTypeCode}
+        </if>
+        <if test="query.userName != null and query.userName != ''">
+            AND user_name LIKE CONCAT('%',#{query.userName},'%')
+        </if>
+        <if test="query.phoneNumber != null and query.phoneNumber != ''">
+            AND phone_number LIKE CONCAT('%',#{query.phoneNumber},'%')
+        </if>
+        <if test="query.cardId != null and query.cardId != ''">
+            AND card_id LIKE CONCAT('%',#{query.cardId},'%')
+        </if>
+        <if test="query.parkingLotCode != null and query.parkingLotCode != ''">
+            AND parking_lot_code LIKE CONCAT('%',#{query.parkingLotCode},'%')
+        </if>
+        <if test="query.monthlyFree != null and query.monthlyFree != ''">
+            AND monthly_free LIKE CONCAT('%',#{query.monthlyFree},'%')
+        </if>
+        <!-- 添加monthlyStatus的判断逻辑 -->
+        <if test="query.monthlyStatus != null">
+            <choose>
+                <when test="query.monthlyStatus == 2">
+                    <!-- 如果monthlyStatus为2，查询当前时间不在start_time和end_time之间 -->
+                    AND NOW() NOT BETWEEN monthly_start_time AND monthly_end_time
+                </when>
+                <when test="query.monthlyStatus == 1">
+                    <!-- 如果monthlyStatus为1，查询当前时间在start_time和end_time之间 -->
+                    AND NOW() BETWEEN monthly_start_time AND monthly_end_time
+                </when>
+            </choose>
+        </if>
+    </sql>
+
+    <!--统计今日月保缴费记录-->
+    <select id="getTodayPayments" resultType="java.lang.Double">
+        SELECT
+            SUM(CAST(payment_amount AS DECIMAL(10, 2)))
+        FROM monthly_insurance_payment
+        WHERE
+            DATE(create_time) = CURDATE()
+    </select>
+
+    <!--统计总月保缴费记录-->
+    <select id="getTotalPayments" resultType="java.lang.Double">
+        SELECT
+            SUM(CAST(accumulate_payment_amount AS DECIMAL(10, 2)))
+        FROM monthly_insurance_payment
+    </select>
+</mapper>

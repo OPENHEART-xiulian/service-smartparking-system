@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sp.cjgc.backend.mapper.SystemUsersMapper">
+    <resultMap type="com.sp.cjgc.backend.domain.SystemUsers" id="systemUsersResultMap">
+        <id property="id" column="id" jdbcType="VARCHAR"/>
+        <result property="account" column="account" jdbcType="VARCHAR"/>
+        <result property="password" column="password" jdbcType="VARCHAR"/>
+        <result property="headSculpture" column="head_sculpture" jdbcType="VARCHAR"/>
+        <result property="userName" column="user_name" jdbcType="VARCHAR"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="freeTime" column="free_time" jdbcType="INTEGER"/>
+        <result property="phoneNumber" column="phone_number" jdbcType="VARCHAR"/>
+        <result property="unitAddress" column="unit_address" jdbcType="VARCHAR"/>
+        <result property="frontBusinessLicense" column="front_business_license" jdbcType="VARCHAR"/>
+        <result property="oppositeBusinessLicense" column="opposite_business_license" jdbcType="VARCHAR"/>
+        <result property="status" column="status" jdbcType="INTEGER"/>
+    </resultMap>
+    
+    <!--列名-->
+    <sql id="columns">
+        id
+        ,
+        account,
+        password,
+        head_sculpture,
+        user_name,
+        create_time,
+        free_time,
+        phone_number,
+        front_business_license,
+        opposite_business_license,
+        status,
+        unit_address
+    </sql>
+
+    <!--统计 系统管理-用户表 总数-->
+    <select id="countTotal" resultType="java.lang.Long">
+        SELECT 
+            COUNT(su.id)
+        FROM system_users su
+        <include refid="selectQuery"/>
+    </select>
+    
+    <!--分页查询 系统管理-用户表 列表-->
+    <select id="getPageList" resultMap="systemUsersResultMap">
+        SELECT
+            su.id,
+            su.account,
+            su.password,
+            su.head_sculpture,
+            su.user_name,
+            su.create_time,
+            su.free_time,
+            su.phone_number,
+            su.front_business_license,
+            su.opposite_business_license,
+            su.status,
+            su.unit_address,
+            sr.id AS roleId,
+            sr.role_name AS roleName
+        FROM system_users su
+        <include refid="selectQuery"/>
+        ORDER BY su.create_time DESC
+        LIMIT #{query.pageNumber},#{query.pageSize}
+    </select>
+
+    <!--根据账号查询用户是否存在-->
+    <select id="accountDoesItExist" resultType="java.lang.Long">
+        SELECT
+            COUNT(id)
+        FROM system_users
+        WHERE account = #{account}
+    </select>
+
+    <!--根据账号查询用户详细信息-->
+    <select id="getEntityByAccount" resultMap="systemUsersResultMap">
+        SELECT
+            su.id,
+            su.account,
+            su.password,
+            su.head_sculpture,
+            su.user_name,
+            su.create_time,
+            su.free_time,
+            su.phone_number,
+            su.front_business_license,
+            su.opposite_business_license,
+            su.status,
+            su.unit_address,
+            sr.id AS roleId,
+            sr.role_name AS roleName,
+            sr.permissions AS permissions
+        FROM system_users su
+        INNER JOIN system_user_role sur ON su.id = sur.user_id
+        INNER JOIN system_role sr ON sr.id = sur.role_id
+        WHERE
+            su.account = #{account} OR su.id = #{account}
+    </select>
+
+    <!--根据id查询用户详细信息-->
+    <select id="getEntityByUserId" resultMap="systemUsersResultMap">
+        SELECT
+            su.id,
+            su.account,
+            su.password,
+            su.head_sculpture,
+            su.user_name,
+            su.create_time,
+            su.free_time,
+            su.phone_number,
+            su.front_business_license,
+            su.opposite_business_license,
+            su.status,
+            su.unit_address,
+            sr.id AS roleId,
+            sr.role_name AS roleName,
+            sr.permissions AS permissions
+        FROM system_users su
+                 INNER JOIN system_user_role sur ON su.id = sur.user_id
+                 INNER JOIN system_role sr ON sr.id = sur.role_id
+        WHERE
+            su.id = #{userId}
+    </select>
+
+    <!--查询管理员用户-->
+    <select id="getEntity" resultMap="systemUsersResultMap">
+        SELECT
+            su.id
+        FROM system_users su
+                 INNER JOIN system_user_role sur ON su.id = sur.user_id
+                 INNER JOIN system_role sr ON sr.id = sur.role_id
+        WHERE sr.id = 3 OR sr.id = 4
+        LIMIT 1
+    </select>
+
+    <!--系统管理-用户表 的查询条件-->
+    <sql id="selectQuery">
+        INNER JOIN system_user_role sur ON su.id = sur.user_id
+        INNER JOIN system_role sr ON sr.id = sur.role_id
+        WHERE 1 = 1   AND sr.id != 4
+        <if test="query.account != null and query.account != ''">
+            AND su.account LIKE CONCAT('%',#{query.account},'%')
+        </if>
+        <if test="query.userName != null and query.userName != ''">
+            AND su.user_name LIKE CONCAT('%',#{query.userName},'%')
+        </if>
+    </sql>
+</mapper>

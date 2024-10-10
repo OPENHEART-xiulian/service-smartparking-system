@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sp.cjgc.backend.mapper.CarVisitorMapper">
+    <resultMap type="com.sp.cjgc.backend.domain.CarVisitor" id="carVisitorResultMap">
+        <id property="id" column="id" jdbcType="VARCHAR"/>
+        <result property="mainlandLicensePlates" column="mainland_license_plates" jdbcType="VARCHAR"/>
+        <result property="otherLicensePlates" column="other_license_plates" jdbcType="VARCHAR"/>
+        <result property="startTime" column="start_time" jdbcType="TIMESTAMP"/>
+        <result property="endTime" column="end_time" jdbcType="TIMESTAMP"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+    </resultMap>
+    
+    <!--列名-->
+    <sql id="columns">
+        id
+        ,
+        mainland_license_plates,
+        other_license_plates,
+        start_time,
+        end_time,
+        create_time,
+        update_time
+    </sql>
+
+    <!--统计 车辆管理-访客车登记管理表 总数-->
+    <select id="countTotal" resultType="java.lang.Long">
+        SELECT 
+            COUNT(id)
+        FROM car_visitor
+        <include refid="selectQuery"/>
+    </select>
+    
+    <!--分页查询 车辆管理-访客车登记管理表 列表-->
+    <select id="getPageList" resultMap="carVisitorResultMap">
+        SELECT 
+            <include refid="columns"/>
+        ,CASE
+        WHEN NOW() BETWEEN start_time AND end_time THEN 2 ELSE 1
+        END AS isFree
+        FROM car_visitor
+        <include refid="selectQuery"/>
+        <if test="query.sort == 1">
+            ORDER BY create_time ${query.sortType == 1 ? 'ASC' : 'DESC'}
+        </if>
+        <if test="query.sort == 2">
+            ORDER BY update_time ${query.sortType == 1 ? 'ASC' : 'DESC'}
+        </if>
+        <if test="query.sort == null or query.sortType == null">
+            ORDER BY create_time DESC
+        </if>
+        LIMIT #{query.pageNumber},#{query.pageSize}
+    </select>
+
+    <!--根据内地车牌号码查询数据是否存在-->
+    <select id="getByLicensePlates" resultMap="carVisitorResultMap">
+        SELECT
+        <include refid="columns"/>
+        FROM car_visitor
+        WHERE mainland_license_plates LIKE CONCAT('%',#{mainlandLicensePlates},'%')
+    </select>
+
+    <!--
+        查询当前访客车辆是否在免费时间内
+        如果isFree为1，查询当前时间不在start_time和end_time之间，表示失效
+        如果isFree为2，查询当前时间在start_time和end_time之间，表示有效
+    -->
+    <select id="getIsFreeByLicensePlates" resultMap="carVisitorResultMap">
+        SELECT
+        <include refid="columns"/>
+        ,CASE
+        WHEN NOW() BETWEEN start_time AND end_time THEN 2 ELSE 1
+        END AS isFree
+        FROM car_visitor
+        WHERE mainland_license_plates LIKE CONCAT('%',#{mainlandLicensePlates},'%')
+    </select>
+    
+    <!--车辆管理-访客车登记管理表 的查询条件-->
+    <sql id="selectQuery">
+        WHERE 1 = 1
+        <if test="query.mainlandLicensePlates != null and query.mainlandLicensePlates != ''">
+            AND mainland_license_plates LIKE CONCAT('%',#{query.mainlandLicensePlates},'%')
+        </if>
+        <if test="query.otherLicensePlates != null and query.otherLicensePlates != ''">
+            AND other_license_plates LIKE CONCAT('%',#{otherLicensePlates},'%')
+        </if>
+        <if test="query.startTime != null and query.startTime != ''">
+            AND start_time >= #{query.startTime}
+        </if>
+        <if test="query.endTime != null and query.endTime != ''">
+            AND end_time &lt;= #{query.endTime}
+        </if>
+        <!-- 添加isEffective的判断逻辑 -->
+        <if test="query.isFree != null">
+            <choose>
+                <when test="query.isFree == 2">
+                    <!-- 如果isFree为2，查询当前时间不在start_time和end_time之间 -->
+                    AND NOW() NOT BETWEEN start_time AND end_time
+                </when>
+                <when test="query.isFree == 1">
+                    <!-- 如果isFree为1，查询当前时间在start_time和end_time之间 -->
+                    AND NOW() BETWEEN start_time AND end_time
+                </when>
+            </choose>
+        </if>
+    </sql>
+</mapper>

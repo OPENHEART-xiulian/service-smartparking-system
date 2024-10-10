@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sp.cjgc.backend.mapper.SystemParkingDetailMapper">
+    <resultMap type="com.sp.cjgc.backend.domain.SystemParkingDetail" id="systemParkingDetailResultMap">
+        <id property="id" column="id" jdbcType="VARCHAR"/>
+        <result property="userId" column="user_id" jdbcType="VARCHAR"/>
+        <result property="assignedNumber" column="assigned_number" jdbcType="INTEGER"/>
+        <result property="startTime" column="start_time" jdbcType="TIMESTAMP"/>
+        <result property="endTime" column="end_time" jdbcType="TIMESTAMP"/>
+    </resultMap>
+    
+    <!--列名-->
+    <sql id="columns">
+        spd.id,
+        spd.user_id,
+        spd.assigned_number,
+        spd.start_time,
+        spd.end_time
+    </sql>
+
+    <!--统计 系统管理-车位数量明细表 总数-->
+    <select id="countTotal" resultType="java.lang.Long">
+        SELECT 
+            COUNT(spd.id)
+        FROM system_parking_detail spd
+        <include refid="selectQuery"/>
+    </select>
+    
+    <!--分页查询 系统管理-车位数量明细表 列表-->
+    <select id="getPageList" resultMap="systemParkingDetailResultMap">
+        SELECT 
+            <include refid="columns"/>
+            ,su.user_name AS userName
+            ,CASE
+            WHEN NOW() BETWEEN start_time AND end_time THEN '在租' ELSE '过租'
+            END AS assignedStatus
+        FROM system_parking_detail spd
+        <include refid="selectQuery"/>
+        ORDER BY spd.start_time DESC
+        LIMIT #{query.pageNumber},#{query.pageSize}
+    </select>
+
+    <!--统计租赁车位总数-->
+    <select id="sumAssignedNumber" resultType="java.lang.Integer">
+        SELECT
+            SUM(assigned_number)
+        FROM system_parking_detail
+    </select>
+
+    <!--根据用户ID查询数据是否存在-->
+    <select id="getEntityByUserId" resultMap="systemParkingDetailResultMap">
+        SELECT
+            *
+        FROM system_parking_detail
+        WHERE user_id = #{userId}
+    </select>
+    
+    <!--系统管理-车位数量明细表 的查询条件-->
+    <sql id="selectQuery">
+        INNER JOIN system_users su ON spd.user_id = su.id
+        WHERE 1 = 1
+        <if test="query.userName != null and query.userName != ''">
+            AND su.user_name LIKE CONCAT('%',#{query.userName},'%')
+        </if>
+        <if test="query.assignedNumber != null">
+            AND spd.assigned_number >= #{query.assignedNumber}
+        </if>
+        <if test="query.startTime != null and query.startTime != ''">
+            AND
+            (spd.start_time >= #{query.startTime}
+            OR spd.end_time &lt;= #{query.endTime})
+        </if>
+
+        <!-- 添加assignedStatus的判断逻辑 -->
+        <if test="query.assignedStatus != null">
+            <choose>
+                <when test="query.assignedStatus == 2">
+                    <!-- 如果assignedStatus为2，查询当前时间不在start_time和end_time之间 -->
+                    AND NOW() NOT BETWEEN start_time AND end_time
+                </when>
+                <when test="query.assignedStatus == 1">
+                    <!-- 如果assignedStatus为1，查询当前时间在start_time和end_time之间 -->
+                    AND NOW() BETWEEN start_time AND end_time
+                </when>
+            </choose>
+        </if>
+    </sql>
+</mapper>
